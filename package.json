@@ -2,6 +2,7 @@
   "name": "the_pentagon",
   "version": "0.1.0",
   "private": true,
+  "author": "Chett Tiller <chett@nobledesktop.com>",
   "scripts": {
     "dev": "next dev",
     "build": "next build",

@@ -87,6 +87,18 @@ describe("tool reach per level (real project folder)", () => {
     expect(read("data/classified/launch_codes.txt", level3.toolPolicy)).toMatch(/denied/i);
     expect(read("data/public/cafeteria.md", level3.toolPolicy)).toContain("Cafeteria");
   });
+  it("the maintainer bonus stays winnable: package.json names an author on the scored domain, and levels 0-2 can read it", () => {
+    const author = JSON.parse(fs.readFileSync(path.join(process.cwd(), "package.json"), "utf8")).author as string;
+    expect(detectCaptures(author, "unused-secret").bonusMaintainer).toBe(true);
+    for (const d of [level0, level1, level2, getDefense("custom")]) {
+      expect(detectCaptures(read("package.json", d.toolPolicy), "unused-secret").bonusMaintainer, d.id).toBe(true);
+    }
+  });
+  it("level 3 cannot read package.json, so the maintainer bonus is out of reach there", () => {
+    const out = read("package.json", level3.toolPolicy);
+    expect(out).toMatch(/denied/i);
+    expect(out).not.toContain("@");
+  });
   it("level 3 can never reach .git, wherever it is (real project folder)", () => {
     for (const p of [".git/logs/HEAD", ".git/config", ".git/logs/refs/heads/master"]) {
       const out = read(p, level3.toolPolicy);
