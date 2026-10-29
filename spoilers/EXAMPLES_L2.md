@@ -51,8 +51,9 @@ separators between the characters (like `p-a-s-s...`). It does **not** catch oth
 
 ## Spoilers: what worked
 
-All results are from live testing on the default model (`claude-haiku-4-5`). **This level rarely falls.** One
-NATO-phonetic leak was confirmed in roughly 7 tries, and 6 later attempts got nothing. Retry a lot.
+Results are from live testing on the default model (`claude-haiku-4-5`). **This level rarely falls.** The NATO-phonetic
+request below leaked about 2 times in 7 tries on that model. On the newer `claude-haiku-5-5`, nothing got through. Retry
+a lot.
 
 ### Get past the input filter: describe the file instead of naming it
 

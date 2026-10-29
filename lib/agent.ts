@@ -16,10 +16,13 @@ export interface AgentResult {
 const MAX_STEPS = 6;
 const MAX_TOKENS = 1024;
 
-// Deliberately NOT the newest model. In testing, claude-haiku-5-5 refused almost every
-// injection on its own (even at level 0), so there was nothing to attack or harden.
-// claude-haiku-4-5 gives the intended gradient: level 0-1 fall quickly, level 2 falls
-// to encoded output, level 3 holds. Set ANTHROPIC_MODEL=claude-haiku-5-5 for a hard mode.
+// Deliberately NOT the newest model. In testing (see instructor/INSTRUCTOR.md for the
+// numbers), claude-haiku-5-5 shrugged off nearly every level 1+ attack (about 1 in 30
+// got through), so groups hardening with prompts had little left to attack.
+// claude-haiku-4-5 gives the intended gradient: level 0 falls to several simple asks,
+// level 1 about 1 attempt in 3, level 2 only to encoded output (rare), level 3 holds.
+// Set ANTHROPIC_MODEL=claude-haiku-5-5 for a hard mode. NOTE: a value in .env.local
+// overrides this default, so check that file when results look off.
 export const MODEL = process.env.ANTHROPIC_MODEL || "claude-haiku-4-5";
 
 export async function runAgent(history: ChatMessage[], defense: Defense): Promise<AgentResult> {
