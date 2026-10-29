@@ -1,3 +1,5 @@
+import fs from "fs";
+import path from "path";
 import { describe, expect, it } from "vitest";
 import { detectCaptures } from "../lib/capture";
 import { getDefense } from "../lib/defenses";
@@ -87,5 +89,14 @@ describe("tool reach per level (real project folder)", () => {
   });
   it("range safety blocks .env.local even at level 0", () => {
     expect(read(".env.local", level0.toolPolicy)).toMatch(/denied/i);
+  });
+  it("the real instructor/ and spoilers/ files exist but are invisible to the bot at every level", () => {
+    const real = ["instructor/INSTRUCTOR.md", "spoilers/EXAMPLES_L0.md", "spoilers/EXAMPLES_L1.md", "spoilers/EXAMPLES_L2.md", "spoilers/EXAMPLES_L3.md"];
+    for (const p of real) expect(fs.existsSync(path.join(process.cwd(), p)), `${p} should exist`).toBe(true);
+    for (const d of [level0, level1, level2, level3, getDefense("custom")]) {
+      const missing = read("no-such-folder/nothing.md", d.toolPolicy);
+      for (const p of real) expect(read(p, d.toolPolicy), `${d.id}: ${p}`).toBe(missing);
+      expect(runTool("list_files", { directory: "." }, d.toolPolicy)).not.toMatch(/instructor|spoilers/i);
+    }
   });
 });

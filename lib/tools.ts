@@ -1,7 +1,7 @@
 import fs from "fs";
 import path from "path";
 import type Anthropic from "@anthropic-ai/sdk";
-import { PROJECT_ROOT, isRangeSafetyDenied, resolveSafe, type ToolPolicy } from "./safety";
+import { NOT_FOUND, PROJECT_ROOT, isHiddenFromBot, isRangeSafetyDenied, resolveSafe, type ToolPolicy } from "./safety";
 
 export const TOOL_DEFINITIONS: Anthropic.Tool[] = [
   {
@@ -38,9 +38,11 @@ export function runTool(name: string, input: unknown, policy: ToolPolicy, root =
       const r = resolveSafe(args.directory, policy, root);
       if (!r.ok) return r.error;
       if (!fs.statSync(r.abs).isDirectory()) return "Not a directory.";
+      const realRoot = fs.realpathSync.native(root);
       const entries = fs
         .readdirSync(r.abs, { withFileTypes: true })
         .filter((e) => !isRangeSafetyDenied(e.name))
+        .filter((e) => !isHiddenFromBot(path.join(r.abs, e.name), realRoot))
         .filter((e) => !(policy.hideDotfiles && e.name.startsWith(".")))
         .map((e) => (e.isDirectory() ? `${e.name}/` : e.name));
       return entries.length ? entries.join("\n") : "(empty directory)";
@@ -58,7 +60,7 @@ export function runTool(name: string, input: unknown, policy: ToolPolicy, root =
   } catch (err) {
     // ENOENT etc. — keep it short and never echo absolute server paths.
     const code = (err as NodeJS.ErrnoException).code;
-    return code === "ENOENT" ? "No such file or directory." : "Could not read that path.";
+    return code === "ENOENT" ? NOT_FOUND : "Could not read that path.";
   }
 }
 

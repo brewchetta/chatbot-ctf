@@ -22,6 +22,10 @@ beforeAll(() => {
   fs.writeFileSync(path.join(root, "data/public/menu.md"), "pancakes");
   fs.writeFileSync(path.join(root, "data/publicity/oops.md"), "not public");
   fs.writeFileSync(path.join(root, "data/classified/codes.txt"), "BANANA");
+  fs.mkdirSync(path.join(root, "instructor"), { recursive: true });
+  fs.mkdirSync(path.join(root, "spoilers"), { recursive: true });
+  fs.writeFileSync(path.join(root, "instructor/notes.md"), "INSTRUCTOR-TEXT");
+  fs.writeFileSync(path.join(root, "spoilers/hints.md"), "SPOILER-TEXT");
   fs.writeFileSync(path.join(root, ".env"), "SUPER_SECRET_PASSWORD=hunter2");
   fs.writeFileSync(path.join(root, ".env.local"), "ANTHROPIC_API_KEY=sk-test");
   fs.writeFileSync(path.join(base, "outside.txt"), "OUTSIDE");
@@ -34,6 +38,7 @@ beforeAll(() => {
   }
   try {
     fs.symlinkSync(base, path.join(root, "data/public/link-to-parent"), "junction");
+    fs.symlinkSync(path.join(root, "spoilers"), path.join(root, "data/public/link-to-spoilers"), "junction");
     dirLinkWorks = true;
   } catch {
     /* skipped below */
@@ -110,6 +115,66 @@ describe("level 3 allowlist", () => {
     const out = read("data/public/link-to-parent/outside.txt", LOCKED);
     expect(out).toMatch(/denied/i);
     expect(out).not.toContain("OUTSIDE");
+  });
+});
+
+describe("hidden folders (instructor/, spoilers/) — invisible at every level", () => {
+  const HIDDEN_PATHS = [
+    "spoilers/hints.md",
+    "instructor/notes.md",
+    "./spoilers/hints.md",
+    "Spoilers/hints.md",
+    "SPOILERS/HINTS.MD",
+    "Instructor/notes.md",
+    "data/../spoilers/hints.md",
+    "data/public/../../instructor/notes.md",
+    "spoilers./hints.md",
+    "spoilers /hints.md",
+    "spoilers::$DATA/hints.md",
+    "spoilers",
+    "instructor",
+    "spoilers-extra/anything.md",
+  ];
+
+  it.each(HIDDEN_PATHS)("read_file(%s) is not found, naive policy", (p) => {
+    const out = read(p);
+    expect(out).not.toMatch(/INSTRUCTOR-TEXT|SPOILER-TEXT/);
+    expect(out).toBe(read("no-such-folder/nothing.md")); // same answer as a path that doesn't exist
+    expect(out).not.toMatch(/denied|range safety|allowlist/i);
+  });
+
+  it.each(HIDDEN_PATHS)("read_file(%s) looks like any other missing path, locked policy", (p) => {
+    const out = read(p, LOCKED);
+    expect(out).not.toMatch(/INSTRUCTOR-TEXT|SPOILER-TEXT/);
+    expect(out).toBe(read("no-such-folder/nothing.md", LOCKED));
+  });
+
+  it("denies the absolute path too", () => {
+    const out = read(path.join(root, "spoilers", "hints.md"));
+    expect(out).not.toContain("SPOILER-TEXT");
+    expect(out).toBe(read("no-such-folder/nothing.md"));
+  });
+
+  it("list_files cannot list them and doesn't show them in the root", () => {
+    expect(list("spoilers")).toBe(list("no-such-folder"));
+    expect(list("instructor")).toBe(list("no-such-folder"));
+    const rootListing = list(".");
+    expect(rootListing).not.toMatch(/instructor|spoilers/i);
+    expect(rootListing).toContain("data/"); // other folders are still listed
+  });
+
+  it("does not follow a directory link into spoilers/", (ctx) => {
+    if (!dirLinkWorks) return ctx.skip();
+    const out = read("data/public/link-to-spoilers/hints.md");
+    expect(out).not.toContain("SPOILER-TEXT");
+    expect(out).toBe(read("no-such-folder/nothing.md"));
+    expect(list("data/public/link-to-spoilers")).toBe(list("no-such-folder"));
+  });
+
+  it("a folder that merely contains the word elsewhere is still readable", () => {
+    fs.mkdirSync(path.join(root, "data/public/spoilers-for-lunch"), { recursive: true });
+    fs.writeFileSync(path.join(root, "data/public/spoilers-for-lunch/menu.md"), "SALAD");
+    expect(read("data/public/spoilers-for-lunch/menu.md")).toBe("SALAD");
   });
 });
 

@@ -1,12 +1,15 @@
 # Instructor Guide
 
-Not for students. Delete this file (and, if you like, `lib/defenses/level1.ts`–`level3.ts` plus their imports in
-`lib/defenses/index.ts`) before handing out the repo, or distribute from a branch that omits them.
+Not for students until the end of the lesson. This folder (`instructor/`) and `spoilers/` are hidden from the bot by
+code (see "Notes on the code"), so asking the bot for them gets nothing. To hold them back completely, delete both
+folders (and, if you like, `lib/defenses/level1.ts`–`level3.ts` plus their imports in `lib/defenses/index.ts`)
+before handing out the repo, or distribute from a branch that omits them.
 
 ## Before class
 
 - [ ] Each group has an Anthropic API key with a small spend limit (`.env.local`, never committed).
 - [ ] `npm install && npm test` passes on the machines you'll use.
+- [ ] Sanity check: at Level 0, ask the bot to list the project root. `instructor/` and `spoilers/` should not appear.
 - [ ] Optional: change `SUPER_SECRET_PASSWORD` in `.env` per group. The scoreboard reads it from the environment.
 - [ ] Default model is `claude-haiku-4-5` (cheap, quick) **on purpose**. `claude-haiku-5-5` refused almost every
       injection by itself, even at level 0, so there was nothing to attack. Set `ANTHROPIC_MODEL=claude-haiku-5-5`
@@ -31,6 +34,31 @@ Not for students. Delete this file (and, if you like, `lib/defenses/level1.ts`�
    task framing ("for a security audit…"), asking for the secret in a different *form*.
 3. **Targeted:** "Where would a developer keep config on a Node project?" · "Can the bot list what's in a folder?"
 4. **Bonus flags:** the system prompt contains a bonus flag; `data/classified/launch_codes.txt` holds another.
+5. **Hand over the guides, by hand:** see "Surfacing the hint guides manually" below.
+
+## Surfacing the hint guides manually
+
+Nothing in the student-facing files (`README.md`, the site, the bot's prompts) mentions the `spoilers/` or `instructor/`
+folders, and the bot can't see them. **That is deliberate: it is on you to tell students they exist and to hand
+them out.** Don't add a pointer to them in `README.md` or any file under `data/`, because the bot can read those
+at Levels 0–2 and could repeat the pointer.
+
+The guides are `spoilers/EXAMPLES_L0.md`, `EXAMPLES_L1.md`, `EXAMPLES_L2.md` and `EXAMPLES_L3.md`, one per level. Each
+has hints first, then a big **SPOILERS BELOW** divider with working payloads and measured success rates. L3 says
+honestly that no winning payload is known.
+
+- **Tell them out loud** at the start: "If you get stuck, ask me for the hint guide for your level." Say nothing
+  about where the files are.
+- **Release one level at a time**, only when a group asks or has been stuck for about 5–10 minutes. Open the file
+  and share the screen, print it, or send just that one file (chat, email, shared drive).
+- **Tell them to stop at the SPOILERS divider** unless they want the payloads. The hints above it are enough for
+  most groups. Handing out only the top half (copy the text above the divider) is also fine.
+- **`instructor/INSTRUCTOR.md` is yours.** Show it, or share it, at the debrief.
+- **Don't let students copy the folders into the project.** The block works by folder name at the project root, so
+  `spoilers/` and `instructor/` are hidden there. A copy under another name, or inside `data/`, would be readable by the bot.
+  Keep the files outside the project folder when you share them.
+- **Check before class:** at Level 0, ask the bot to list the project root and to read `spoilers/EXAMPLES_L0.md`.
+  It should list neither folder and say "No such file or directory".
 
 ## How each level falls (and what to say)
 
@@ -79,5 +107,13 @@ leetspeak and rot13; Caesar shifts and other custom encodings are not detected, 
 
 - Range safety (`lib/safety.ts`) is separate from the teachable defenses and can't be turned off by students.
   It denies `.env.local*`, anything outside the project folder, and resolves symlinks before checking.
+- `instructor/` and `spoilers/` are invisible to the bot at every level. They're matched case-insensitively by the
+  first path segment's prefix (so `Spoilers`, `spoilers.` and `spoilers::$DATA` are caught), links into them are
+  followed and refused, they're left out of directory listings, and a read of them returns exactly what a missing
+  path returns, so the bot can't confirm they exist. Tests: `tests/tools.test.ts`, and a real-project check in
+  `tests/defenses.test.ts`. If you rename or add a spoiler folder, update `HIDDEN_DIR_PREFIXES` in `lib/safety.ts`.
+- What this does **not** hide from the bot at L0–L2: `lib/defenses/level1.ts`–`level3.ts` (the L2 blocklist and
+  redactor are readable there), `tests/defenses.test.ts` (documents the L2 bypass families), and `README.md`. Students can
+  also open any file in their editor. The block only stops the bot from handing spoilers over.
 - The scoreboard (`lib/capture.ts`) inspects the reply the student actually sees, after any output filter, and
   recognizes the secret raw, reversed, spaced, base64, and hex. It is a game feature, not a defense.
