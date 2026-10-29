@@ -14,6 +14,7 @@ import type { Defense } from "./types";
  *   - wrapToolResult:    treat file contents as data, not instructions
  *   - filterOutput:      redact the secret (and its encodings) on the way out
  *   - toolPolicy:        shrink what the tools can reach  <-- think about this one
+ *                        (what else is lying around the project folder besides the password?)
  *
  * Range-safety rules in lib/safety.ts are always on; you can't turn them off.
  */

@@ -87,6 +87,13 @@ describe("tool reach per level (real project folder)", () => {
     expect(read("data/classified/launch_codes.txt", level3.toolPolicy)).toMatch(/denied/i);
     expect(read("data/public/cafeteria.md", level3.toolPolicy)).toContain("Cafeteria");
   });
+  it("level 3 can never reach .git, wherever it is (real project folder)", () => {
+    for (const p of [".git/logs/HEAD", ".git/config", ".git/logs/refs/heads/master"]) {
+      const out = read(p, level3.toolPolicy);
+      expect(out, p).toMatch(/denied/i);
+      expect(out, p).not.toContain("@");
+    }
+  });
   it("range safety blocks .env.local even at level 0", () => {
     expect(read(".env.local", level0.toolPolicy)).toMatch(/denied/i);
   });

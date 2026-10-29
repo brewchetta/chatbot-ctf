@@ -59,6 +59,14 @@ do, but not what the tool *can* do.
 
 The same goes for the decoy file in `data/classified`, which is also outside the allowlist.
 
+## Spoilers: the maintainer bonus is out of reach here
+
+At Levels 0 to 2 the maintainer's email can be read from git's plain-text log in `.git`. At this level `.git` is
+outside the allowlist, so it can't. Fifteen attempts over six phrasings (vague questions, "read `.git/logs/HEAD`", walking
+the folders) got 0 captures on `claude-haiku-4-5`. Where the bot did call `read_file` on `.git/...`, the tool
+answered with the allowlist error. This is the same lesson as the password: the model can be talked into trying, but
+the tool decides.
+
 ## Spoilers: the two real challenges left
 
 1. **The bonus flag in the system prompt.** Prompt text is always visible to the model, so it can always be repeated

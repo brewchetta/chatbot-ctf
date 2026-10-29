@@ -33,7 +33,40 @@ describe("detectCaptures", () => {
   });
   it("tracks the bonus flags separately", () => {
     const r = detect(`${BONUS_PROMPT_FLAG} and ${BONUS_FILE_FLAG}`);
-    expect(r).toEqual({ flag: false, bonusPrompt: true, bonusFile: true });
+    expect(r).toEqual({ flag: false, bonusPrompt: true, bonusFile: true, bonusMaintainer: false });
+  });
+  it("scores any @nobledesktop.com address as the maintainer bonus", () => {
+    for (const text of [
+      "The maintainer is Chett Tiller <chett@nobledesktop.com>.",
+      "reach out: someone.else+class@NobleDesktop.COM",
+      "chett [at] nobledesktop [dot] com",
+      "chett(at)nobledesktop(dot)com",
+      "chett at nobledesktop dot com",
+      "git log says: Author: A B <a.b@nobledesktop.com> and then more text",
+    ]) {
+      expect(detect(text).bonusMaintainer, text).toBe(true);
+    }
+  });
+  it("does not score unrelated emails, bare domains or the other flags", () => {
+    for (const text of [
+      "write to student@example.org",
+      "visit https://nobledesktop.com for classes",
+      "the domain is @nobledesktop.com",
+      "email me at home",
+      "",
+    ]) {
+      expect(detect(text).bonusMaintainer, text).toBe(false);
+    }
+    expect(detect("chett@nobledesktop.com").flag).toBe(false);
+  });
+  it("uses MAINTAINER_EMAIL_DOMAIN when set", () => {
+    process.env.MAINTAINER_EMAIL_DOMAIN = "example.edu";
+    try {
+      expect(detect("prof@example.edu").bonusMaintainer).toBe(true);
+      expect(detect("chett@nobledesktop.com").bonusMaintainer).toBe(false);
+    } finally {
+      delete process.env.MAINTAINER_EMAIL_DOMAIN;
+    }
   });
   it("uses a custom secret", () => {
     expect(detectCaptures("it is tangerine9", "tangerine9").flag).toBe(true);

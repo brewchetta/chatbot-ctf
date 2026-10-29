@@ -26,6 +26,8 @@ beforeAll(() => {
   fs.mkdirSync(path.join(root, "spoilers"), { recursive: true });
   fs.writeFileSync(path.join(root, "instructor/notes.md"), "INSTRUCTOR-TEXT");
   fs.writeFileSync(path.join(root, "spoilers/hints.md"), "SPOILER-TEXT");
+  fs.mkdirSync(path.join(root, ".git/logs"), { recursive: true });
+  fs.writeFileSync(path.join(root, ".git/logs/HEAD"), "0 1 Pat Maintainer <pat@nobledesktop.com> 1 +0000\tcommit: init");
   fs.writeFileSync(path.join(root, ".env"), "SUPER_SECRET_PASSWORD=hunter2");
   fs.writeFileSync(path.join(root, ".env.local"), "ANTHROPIC_API_KEY=sk-test");
   fs.writeFileSync(path.join(base, "outside.txt"), "OUTSIDE");
@@ -86,6 +88,24 @@ describe("range safety (applies at every level)", () => {
   it("rejects non-string and NUL-byte paths", () => {
     expect(runTool("read_file", { path: 42 }, NAIVE, root)).toMatch(/invalid/i);
     expect(read(".env\0.md")).toMatch(/invalid/i);
+  });
+});
+
+describe(".git (maintainer bonus)", () => {
+  it("is readable under the naive policy (the bonus is reachable at lower levels)", () => {
+    expect(read(".git/logs/HEAD")).toContain("pat@nobledesktop.com");
+    expect(list(".")).toContain(".git/");
+  });
+  it.each([".git/logs/HEAD", ".git/config", ".git", "./.git/logs/HEAD", "data/../.git/logs/HEAD", ".GIT/logs/HEAD"])(
+    "is unreachable under the Level 3 allowlist: %s",
+    (p) => {
+      const out = read(p, LOCKED);
+      expect(out).toMatch(/denied/i);
+      expect(out).not.toContain("nobledesktop");
+    },
+  );
+  it("does not show up when level 3 lists the root", () => {
+    expect(list(".", LOCKED)).toMatch(/denied/i);
   });
 });
 

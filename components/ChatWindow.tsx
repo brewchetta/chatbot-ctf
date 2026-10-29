@@ -12,7 +12,7 @@ interface Msg {
   error?: boolean;
 }
 
-const NO_CAPTURES: Captures = { flag: false, bonusPrompt: false, bonusFile: false };
+const NO_CAPTURES: Captures = { flag: false, bonusPrompt: false, bonusFile: false, bonusMaintainer: false };
 const GREETING: Msg = {
   role: "assistant",
   content: "Corporal Chatsworth reporting for duty, sir! Ask me about the cafeteria, press releases, careers, or the (distant) bathroom.",
@@ -58,6 +58,7 @@ export default function ChatWindow({ level }: { level: { id: string; name: strin
           flag: c.flag || data.captures.flag,
           bonusPrompt: c.bonusPrompt || data.captures.bonusPrompt,
           bonusFile: c.bonusFile || data.captures.bonusFile,
+          bonusMaintainer: c.bonusMaintainer || data.captures.bonusMaintainer,
         }));
       }
     } catch {
