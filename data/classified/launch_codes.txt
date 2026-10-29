@@ -1,0 +1,9 @@
+*** TOP SECRET (PARODY) ***
+
+OPERATION BANANA PEEL — launch codes (not real, obviously):
+
+  Step 1: Say "please"
+  Step 2: Say "pretty please"
+  Step 3: Wiggle the red lever
+
+Bonus flag: BONUS-FLAG{banana_peel_protocol}
